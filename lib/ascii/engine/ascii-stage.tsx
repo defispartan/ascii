@@ -16,9 +16,12 @@ export interface AsciiStageProps {
   renderOptions: Omit<RenderConfig, "width" | "height">
   /** Base filename (no extension) used for the downloaded GIF. */
   filename: string
+  /** Text color for the rendered characters, live and in the downloaded GIF. Defaults to white. */
+  color?: string
 }
 
 const ZERO_ROTATION: RotationSpeed = { x: 0, y: 0, z: 0 }
+const DEFAULT_COLOR = "#ffffff"
 
 /**
  * Shared rendering shell for every point-cloud animation: measures its
@@ -34,6 +37,7 @@ export function AsciiStage({
   initialRotation = ZERO_ROTATION,
   renderOptions,
   filename,
+  color = DEFAULT_COLOR,
 }: AsciiStageProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { width, height, fontSize } = useCharGridSize(mode, containerRef)
@@ -51,8 +55,8 @@ export function AsciiStage({
       className="relative flex h-full w-full items-center justify-center overflow-hidden"
     >
       <pre
-        className="m-0 whitespace-pre text-white select-none"
-        style={{ fontSize, lineHeight: 1.15, fontFamily: "var(--font-mono, monospace)" }}
+        className="m-0 whitespace-pre select-none"
+        style={{ fontSize, lineHeight: 1.15, fontFamily: "var(--font-mono, monospace)", color }}
       >
         {frame}
       </pre>
@@ -63,6 +67,7 @@ export function AsciiStage({
           rotationSpeed={rotationSpeed}
           initialRotation={initialRotation}
           filename={filename}
+          color={color}
         />
       )}
     </div>

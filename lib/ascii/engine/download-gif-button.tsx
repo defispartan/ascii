@@ -13,6 +13,8 @@ interface DownloadGifButtonProps {
   rotationSpeed: RotationSpeed
   initialRotation: RotationSpeed
   filename: string
+  /** Text color for the exported GIF. Defaults to white. */
+  color?: string
 }
 
 interface AspectOption {
@@ -42,7 +44,7 @@ const EXPORT_FONT_SIZE = 15
 // export re-derives its own scale from this instead of reusing that value.
 const TARGET_FILL = 0.92
 const LINE_HEIGHT = 1.15
-const TEXT_COLOR = "#ffffff"
+const DEFAULT_TEXT_COLOR = "#ffffff"
 const BACKGROUND_COLOR = "#111111"
 const FPS = 20
 // Canvas's 2D context can't resolve CSS custom properties (var(--font-mono)),
@@ -56,6 +58,7 @@ export function DownloadGifButton({
   rotationSpeed,
   initialRotation,
   filename,
+  color = DEFAULT_TEXT_COLOR,
 }: DownloadGifButtonProps) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
@@ -87,7 +90,7 @@ export function DownloadGifButton({
         fontSize: EXPORT_FONT_SIZE,
         lineHeight: LINE_HEIGHT,
         fontFamily: FONT_FAMILY,
-        textColor: TEXT_COLOR,
+        textColor: color,
         backgroundColor: BACKGROUND_COLOR,
         fps: FPS,
         aspectRatio,
