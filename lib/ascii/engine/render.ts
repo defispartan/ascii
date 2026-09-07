@@ -1,21 +1,29 @@
 import { rotatePoint } from "./math"
 import type { Point3D, RenderConfig, RotationSpeed } from "./types"
 
+/** A rendered frame's character grid plus, in parallel, which palette color each cell was drawn with. */
+export interface RenderedFrame {
+  width: number
+  height: number
+  chars: string[]
+  colorIndex: Uint8Array
+}
+
 /**
  * Rotates every point, perspective-projects it into a width x height character
  * grid, resolves occlusion with a 1/z depth buffer, and shades each visible
  * cell by the dot product of its rotated normal with the light direction -
  * the same rotate -> project -> z-buffer -> shade-by-normal technique the
- * reference donut.js uses, generalized to work over any point cloud.
+ * reference donut.js uses, generalized to work over any point cloud. Each
+ * cell also records the palette color of whichever point won its depth test,
+ * so callers that care about color (the live view, GIF export) can use it -
+ * callers that only need the glyphs (renderFrame) can ignore it.
  */
-export function renderFrame(
-  points: Point3D[],
-  rotation: RotationSpeed,
-  config: RenderConfig
-): string {
+function renderFrameCells(points: Point3D[], rotation: RotationSpeed, config: RenderConfig): RenderedFrame {
   const { width, height, scale, distance, ramp, lightDir, ambient = 0 } = config
   const size = width * height
-  const buffer = new Array<string>(size).fill(" ")
+  const chars = new Array<string>(size).fill(" ")
+  const colorIndex = new Uint8Array(size)
   const zbuffer = new Array<number>(size).fill(0)
   const [lx, ly, lz] = lightDir
 
@@ -34,14 +42,26 @@ export function renderFrame(
 
     const luminance = p.nx * lx + p.ny * ly + p.nz * lz + ambient
     const rampIndex = Math.max(0, Math.min(ramp.length - 1, Math.floor(luminance * 8)))
-    buffer[idx] = ramp[rampIndex]
+    chars[idx] = ramp[rampIndex]
+    colorIndex[idx] = point.colorIndex ?? 0
   }
 
+  return { width, height, chars, colorIndex }
+}
+
+/** Renders a frame to plain text, discarding color - used where only the glyphs matter (fill-fitting, loop-length probing). */
+export function renderFrame(points: Point3D[], rotation: RotationSpeed, config: RenderConfig): string {
+  const { width, height, chars } = renderFrameCells(points, rotation, config)
   const lines: string[] = []
   for (let y = 0; y < height; y++) {
-    lines.push(buffer.slice(y * width, y * width + width).join(""))
+    lines.push(chars.slice(y * width, y * width + width).join(""))
   }
   return lines.join("\n")
+}
+
+/** Renders a single frame with its per-cell color indices intact, for display and GIF export. */
+export function renderColoredFrame(points: Point3D[], rotation: RotationSpeed, config: RenderConfig): RenderedFrame {
+  return renderFrameCells(points, rotation, config)
 }
 
 /**
@@ -62,6 +82,29 @@ export function renderFrames(
 
   for (let i = 0; i < frameCount; i++) {
     frames.push(renderFrame(points, rotation, config))
+    rotation = {
+      x: rotation.x + rotationSpeed.x,
+      y: rotation.y + rotationSpeed.y,
+      z: rotation.z + rotationSpeed.z,
+    }
+  }
+
+  return frames
+}
+
+/** Colored analogue of `renderFrames`, for GIF export - same deterministic replay, with per-cell color kept. */
+export function renderColoredFrames(
+  points: Point3D[],
+  config: RenderConfig,
+  rotationSpeed: RotationSpeed,
+  initialRotation: RotationSpeed,
+  frameCount: number
+): RenderedFrame[] {
+  const frames: RenderedFrame[] = []
+  let rotation = initialRotation
+
+  for (let i = 0; i < frameCount; i++) {
+    frames.push(renderColoredFrame(points, rotation, config))
     rotation = {
       x: rotation.x + rotationSpeed.x,
       y: rotation.y + rotationSpeed.y,

@@ -5,6 +5,8 @@ export interface Point3D {
   nx: number
   ny: number
   nz: number
+  /** Index into the animation's color palette. Defaults to 0 (the primary color) when omitted. */
+  colorIndex?: number
 }
 
 export interface RenderConfig {

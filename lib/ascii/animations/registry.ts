@@ -7,6 +7,7 @@ import { SpartanHead } from "./spartan-head/spartan-head"
 import { Turbine } from "./turbine/turbine"
 import { RingedPlanet } from "./ringed-planet/ringed-planet"
 import { Satellite } from "./satellite/satellite"
+import { Baseball } from "./baseball/baseball"
 
 export interface AnimationEntry {
   slug: string
@@ -20,4 +21,5 @@ export const animations: AnimationEntry[] = [
   { slug: "turbine", name: "Turbine", Component: Turbine },
   { slug: "ringed-planet", name: "Ringed Planet", Component: RingedPlanet },
   { slug: "satellite", name: "Satellite", Component: Satellite },
+  { slug: "baseball", name: "Baseball", Component: Baseball },
 ]

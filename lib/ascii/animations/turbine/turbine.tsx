@@ -32,7 +32,7 @@ export function Turbine({ mode = "preview" }: { mode?: AnimationMode }) {
       initialRotation={INITIAL_ROTATION}
       renderOptions={renderOptions}
       filename="turbine"
-      color={COLOR}
+      colors={[COLOR]}
     />
   )
 }
