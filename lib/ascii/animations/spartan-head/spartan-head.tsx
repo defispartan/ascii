@@ -13,7 +13,11 @@ const RAMP = ".,-~:;=!*#$@"
 // for a classic emboss look that reveals the bulge as it spins.
 const LIGHT_DIR: readonly [number, number, number] = [-0.15, 0.2, 0.96]
 const ROTATION_SPEED: RotationSpeed = { x: 0, y: 0.05, z: 0 }
-const INITIAL_ROTATION: RotationSpeed = { x: 0.08, y: 0, z: 0 }
+// No initial tilt, so it spins level around the vertical axis - a perfect
+// horizontal circle instead of a wobbly one.
+const INITIAL_ROTATION: RotationSpeed = { x: 0, y: 0, z: 0 }
+// Michigan State Spartan lime green.
+const COLOR = "#7BBD00"
 
 export function SpartanHead({ mode = "preview" }: { mode?: AnimationMode }) {
   const points = useMemo(() => getSpartanHeadPoints(), [])
@@ -38,6 +42,7 @@ export function SpartanHead({ mode = "preview" }: { mode?: AnimationMode }) {
       initialRotation={INITIAL_ROTATION}
       renderOptions={renderOptions}
       filename="spartan-head"
+      color={COLOR}
     />
   )
 }

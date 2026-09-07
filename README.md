@@ -32,6 +32,7 @@ This builds a new ASCII animation from the image and adds it to the gallery.
   - `horizontal` - tumbles end over end, like a coin flip. Good for anything wider than it is tall.
   - `auto` - picks `vertical` or `horizontal` based on the image's aspect ratio.
   - `random` - picks one at random.
+- **`--color "#rrggbb"`** (optional, default `#ffffff`) - a 6-digit hex color for the rendered characters, used both live and in the downloaded GIF.
 
 Once it's done, run `pnpm dev` and visit the new animation at `/<name>`.
 

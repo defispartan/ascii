@@ -2,7 +2,7 @@
  * Generates a new ASCII animation from a PNG image.
  *
  * Usage:
- *   pnpm generate --image path/to/image.png [--name "Display Name"] [--axis horizontal|vertical|random|auto]
+ *   pnpm generate --image path/to/image.png [--name "Display Name"] [--axis horizontal|vertical|random|auto] [--color "#rrggbb"]
  *
  * The PNG's alpha channel isolates the subject from its background (so a
  * transparent-background cutout works best) - opaque pixels become a
@@ -25,11 +25,14 @@ const MASK_THRESHOLD = 128
 const AXES = ["horizontal", "vertical", "random", "auto"] as const
 type Axis = (typeof AXES)[number]
 type ResolvedAxis = "horizontal" | "vertical"
+const DEFAULT_COLOR = "#ffffff"
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/
 
 interface Args {
   image?: string
   name?: string
   axis?: string
+  color?: string
 }
 
 function parseArgs(argv: string[]): Args {
@@ -156,6 +159,14 @@ function resolveAxis(requested: string | undefined, width: number, height: numbe
   return height >= width ? "vertical" : "horizontal"
 }
 
+function resolveColor(requested: string | undefined): string {
+  if (requested === undefined) return DEFAULT_COLOR
+  if (!HEX_COLOR_PATTERN.test(requested)) {
+    fail(`--color must be a 6-digit hex color like "#18453b" (got "${requested}")`)
+  }
+  return requested
+}
+
 const ROTATION_BY_AXIS = {
   vertical: { rotationSpeed: { x: 0, y: 0.05, z: 0 }, initialRotation: { x: 0.08, y: 0, z: 0 } },
   horizontal: { rotationSpeed: { x: 0.05, y: 0, z: 0 }, initialRotation: { x: 0, y: 0.08, z: 0 } },
@@ -210,6 +221,8 @@ async function main() {
   const { rotationSpeed, initialRotation } = ROTATION_BY_AXIS[axis]
   console.log(`Rotation axis: ${axis}`)
 
+  const color = resolveColor(args.color)
+
   writeFile(path.join(animationDir, "heightmap.json"), JSON.stringify(heightmap))
 
   writeFile(
@@ -247,6 +260,7 @@ const RAMP = ".,-~:;=!*#$@"
 const LIGHT_DIR: readonly [number, number, number] = [-0.15, 0.2, 0.96]
 const ROTATION_SPEED: RotationSpeed = ${JSON.stringify(rotationSpeed)}
 const INITIAL_ROTATION: RotationSpeed = ${JSON.stringify(initialRotation)}
+const COLOR = ${JSON.stringify(color)}
 
 export function ${pascalName}({ mode = "preview" }: { mode?: AnimationMode }) {
   const points = useMemo(() => get${pascalName}Points(), [])
@@ -271,6 +285,7 @@ export function ${pascalName}({ mode = "preview" }: { mode?: AnimationMode }) {
       initialRotation={INITIAL_ROTATION}
       renderOptions={renderOptions}
       filename="${slug}"
+      color={COLOR}
     />
   )
 }
