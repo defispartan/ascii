@@ -1,8 +1,9 @@
 "use client"
 
-import { useMemo, useRef } from "react"
+import { Fragment, useMemo, useRef, type ReactNode } from "react"
 
 import { DownloadGifButton } from "./download-gif-button"
+import type { RenderedFrame } from "./render"
 import { useAsciiAnimation } from "./use-ascii-animation"
 import { useCharGridSize, type AnimationMode } from "./use-char-grid-size"
 import type { Point3D, RenderConfig, RotationSpeed } from "./types"
@@ -16,12 +17,41 @@ export interface AsciiStageProps {
   renderOptions: Omit<RenderConfig, "width" | "height">
   /** Base filename (no extension) used for the downloaded GIF. */
   filename: string
-  /** Text color for the rendered characters, live and in the downloaded GIF. Defaults to white. */
-  color?: string
+  /** Palette of text colors, indexed by each point's `colorIndex`. Defaults to a single white entry. */
+  colors?: string[]
 }
 
 const ZERO_ROTATION: RotationSpeed = { x: 0, y: 0, z: 0 }
-const DEFAULT_COLOR = "#ffffff"
+const DEFAULT_COLORS = ["#ffffff"]
+
+/** Splits a rendered frame into per-line runs of same-color characters, so each row is a handful of spans instead of one per cell. */
+function renderLines(frame: RenderedFrame, colors: string[]): ReactNode[] {
+  const { width, height, chars, colorIndex } = frame
+  if (width === 0 || height === 0) return []
+
+  const lines: ReactNode[] = []
+  for (let y = 0; y < height; y++) {
+    const rowStart = y * width
+    let runStart = 0
+    let runColor = colorIndex[rowStart]
+    for (let x = 1; x <= width; x++) {
+      const atEnd = x === width
+      if (!atEnd && colorIndex[rowStart + x] === runColor) continue
+      const text = chars.slice(rowStart + runStart, rowStart + x).join("")
+      lines.push(
+        <span key={`${y}-${runStart}`} style={{ color: colors[runColor] ?? colors[0] }}>
+          {text}
+        </span>
+      )
+      if (!atEnd) {
+        runStart = x
+        runColor = colorIndex[rowStart + x]
+      }
+    }
+    if (y < height - 1) lines.push(<Fragment key={`${y}-nl`}>{"\n"}</Fragment>)
+  }
+  return lines
+}
 
 /**
  * Shared rendering shell for every point-cloud animation: measures its
@@ -37,7 +67,7 @@ export function AsciiStage({
   initialRotation = ZERO_ROTATION,
   renderOptions,
   filename,
-  color = DEFAULT_COLOR,
+  colors = DEFAULT_COLORS,
 }: AsciiStageProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { width, height, fontSize } = useCharGridSize(mode, containerRef)
@@ -48,6 +78,7 @@ export function AsciiStage({
   )
 
   const frame = useAsciiAnimation({ points, config, rotationSpeed, initialRotation })
+  const lines = useMemo(() => renderLines(frame, colors), [frame, colors])
 
   return (
     <div
@@ -56,9 +87,9 @@ export function AsciiStage({
     >
       <pre
         className="m-0 whitespace-pre select-none"
-        style={{ fontSize, lineHeight: 1.15, fontFamily: "var(--font-mono, monospace)", color }}
+        style={{ fontSize, lineHeight: 1.15, fontFamily: "var(--font-mono, monospace)" }}
       >
-        {frame}
+        {lines}
       </pre>
       {mode === "fullscreen" && (
         <DownloadGifButton
@@ -67,7 +98,7 @@ export function AsciiStage({
           rotationSpeed={rotationSpeed}
           initialRotation={initialRotation}
           filename={filename}
-          color={color}
+          colors={colors}
         />
       )}
     </div>

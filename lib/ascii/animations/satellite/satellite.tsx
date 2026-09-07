@@ -32,7 +32,7 @@ export function Satellite({ mode = "preview" }: { mode?: AnimationMode }) {
       initialRotation={INITIAL_ROTATION}
       renderOptions={renderOptions}
       filename="satellite"
-      color={COLOR}
+      colors={[COLOR]}
     />
   )
 }

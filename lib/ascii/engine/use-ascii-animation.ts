@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 
-import { renderFrame } from "./render"
+import { renderColoredFrame, type RenderedFrame } from "./render"
 import type { Point3D, RenderConfig, RotationSpeed } from "./types"
 
 interface UseAsciiAnimationOptions {
@@ -14,6 +14,7 @@ interface UseAsciiAnimationOptions {
 }
 
 const ZERO_ROTATION: RotationSpeed = { x: 0, y: 0, z: 0 }
+const EMPTY_FRAME: RenderedFrame = { width: 0, height: 0, chars: [], colorIndex: new Uint8Array(0) }
 
 export function useAsciiAnimation({
   points,
@@ -21,8 +22,8 @@ export function useAsciiAnimation({
   rotationSpeed,
   initialRotation = ZERO_ROTATION,
   fps = 20,
-}: UseAsciiAnimationOptions): string {
-  const [frame, setFrame] = useState("")
+}: UseAsciiAnimationOptions): RenderedFrame {
+  const [frame, setFrame] = useState<RenderedFrame>(EMPTY_FRAME)
   const angleRef = useRef<RotationSpeed>(initialRotation)
   const lastTickRef = useRef(0)
 
@@ -46,7 +47,7 @@ export function useAsciiAnimation({
         z: angleRef.current.z + rotationSpeed.z,
       }
 
-      setFrame(renderFrame(points, angleRef.current, config))
+      setFrame(renderColoredFrame(points, angleRef.current, config))
     }
 
     return () => cancelAnimationFrame(raf)

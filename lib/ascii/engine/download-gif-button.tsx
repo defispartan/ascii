@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Download, Loader2 } from "lucide-react"
 
-import { fitScaleToFill, loopFrameCount, renderFrames } from "./render"
+import { fitScaleToFill, loopFrameCount, renderColoredFrames } from "./render"
 import { downloadBlob, exportAsciiGif } from "./gif-export"
 import type { Point3D, RenderConfig, RotationSpeed } from "./types"
 
@@ -13,8 +13,8 @@ interface DownloadGifButtonProps {
   rotationSpeed: RotationSpeed
   initialRotation: RotationSpeed
   filename: string
-  /** Text color for the exported GIF. Defaults to white. */
-  color?: string
+  /** Palette of text colors, indexed by each point's `colorIndex`. Defaults to a single white entry. */
+  colors?: string[]
 }
 
 interface AspectOption {
@@ -44,7 +44,7 @@ const EXPORT_FONT_SIZE = 15
 // export re-derives its own scale from this instead of reusing that value.
 const TARGET_FILL = 0.92
 const LINE_HEIGHT = 1.15
-const DEFAULT_TEXT_COLOR = "#ffffff"
+const DEFAULT_COLORS = ["#ffffff"]
 const BACKGROUND_COLOR = "#111111"
 const FPS = 20
 // Canvas's 2D context can't resolve CSS custom properties (var(--font-mono)),
@@ -58,7 +58,7 @@ export function DownloadGifButton({
   rotationSpeed,
   initialRotation,
   filename,
-  color = DEFAULT_TEXT_COLOR,
+  colors = DEFAULT_COLORS,
 }: DownloadGifButtonProps) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
@@ -82,15 +82,13 @@ export function DownloadGifButton({
       const frameCount = loopFrameCount(rotationSpeed)
       const fittedScale = fitScaleToFill(points, baseConfig, rotationSpeed, initialRotation, frameCount, TARGET_FILL)
       const config: RenderConfig = { ...baseConfig, scale: fittedScale }
-      const frames = renderFrames(points, config, rotationSpeed, initialRotation, frameCount)
+      const frames = renderColoredFrames(points, config, rotationSpeed, initialRotation, frameCount)
       const blob = await exportAsciiGif({
         frames,
-        cols: EXPORT_COLS,
-        rows: EXPORT_ROWS,
         fontSize: EXPORT_FONT_SIZE,
         lineHeight: LINE_HEIGHT,
         fontFamily: FONT_FAMILY,
-        textColor: color,
+        colors,
         backgroundColor: BACKGROUND_COLOR,
         fps: FPS,
         aspectRatio,

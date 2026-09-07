@@ -42,7 +42,7 @@ export function SpartanHead({ mode = "preview" }: { mode?: AnimationMode }) {
       initialRotation={INITIAL_ROTATION}
       renderOptions={renderOptions}
       filename="spartan-head"
-      color={COLOR}
+      colors={[COLOR]}
     />
   )
 }
