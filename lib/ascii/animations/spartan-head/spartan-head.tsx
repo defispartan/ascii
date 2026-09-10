@@ -23,10 +23,16 @@ export function SpartanHead({ mode = "preview" }: { mode?: AnimationMode }) {
   const points = useMemo(() => getSpartanHeadPoints(), [])
   const renderOptions: Omit<RenderConfig, "width" | "height"> = useMemo(
     () => ({
-      scale: 2.2,
+      // The helmet is a flat cutout, so it projects orthographically: its
+      // "depth" is only where the spin has swung each point, not real
+      // thickness, and perspective turned that into a size pulse - 71% of
+      // the grid's height edge-on swelling to 98% face-on. Orthographic
+      // holds it at a steady 95%, which this scale is tuned for.
+      scale: 3.9,
       distance: 5,
       ramp: RAMP,
       lightDir: LIGHT_DIR,
+      perspective: false,
       // Keeps the relief dimly visible on its unlit "back" rotation phase
       // instead of dropping to blank, since it's a single-sided surface.
       ambient: 0.22,
