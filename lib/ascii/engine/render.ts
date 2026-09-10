@@ -10,7 +10,7 @@ export interface RenderedFrame {
 }
 
 /**
- * Rotates every point, perspective-projects it into a width x height character
+ * Rotates every point, projects it into a width x height character
  * grid, resolves occlusion with a 1/z depth buffer, and shades each visible
  * cell by the dot product of its rotated normal with the light direction -
  * the same rotate -> project -> z-buffer -> shade-by-normal technique the
@@ -20,7 +20,7 @@ export interface RenderedFrame {
  * callers that only need the glyphs (renderFrame) can ignore it.
  */
 function renderFrameCells(points: Point3D[], rotation: RotationSpeed, config: RenderConfig): RenderedFrame {
-  const { width, height, scale, distance, ramp, lightDir, ambient = 0 } = config
+  const { width, height, scale, distance, ramp, lightDir, ambient = 0, perspective = true } = config
   const size = width * height
   const chars = new Array<string>(size).fill(" ")
   const colorIndex = new Uint8Array(size)
@@ -30,9 +30,14 @@ function renderFrameCells(points: Point3D[], rotation: RotationSpeed, config: Re
   for (const point of points) {
     const p = rotatePoint(point, rotation)
     const ooz = 1 / (p.z + distance)
+    // Depth still resolves occlusion via `ooz` either way; it only drives the
+    // projection when `perspective` is on. Orthographic keeps the constant
+    // 1/distance - the same factor a perspective frame uses at z = 0 - so
+    // `scale` means the same thing under both.
+    const projection = perspective ? ooz : 1 / distance
 
-    const xp = Math.floor(width / 2 + (width / 4) * scale * ooz * p.x)
-    const yp = Math.floor(height / 2 - (height / 4) * scale * ooz * p.y)
+    const xp = Math.floor(width / 2 + (width / 4) * scale * projection * p.x)
+    const yp = Math.floor(height / 2 - (height / 4) * scale * projection * p.y)
 
     if (xp < 0 || xp >= width || yp < 0 || yp >= height) continue
 
